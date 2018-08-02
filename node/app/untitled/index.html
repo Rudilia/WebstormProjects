@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>molecule</title>
+    <script src="lib/three.js"></script>
+    <script src="lib/OrbitControls.js"></script>
+    <script src= "lib/stats.js"></script>
+
+    <style>
+        .selectButton {
+            padding: 9px;
+            text-align: left;
+            color: #FFFFFF;
+            background-color: #575659;
+            border-width: 0;
+            width: 192px;
+            margin-bottom: 3px;
+            cursor: pointer;
+        }
+
+        .deleteButton{
+            text-align: center;
+
+        }
+        .selectButton:hover, .deleteButton:hover {
+             background-color: #6e6d70;
+         }
+
+        html, body {
+            height: 100%;
+            margin:0;
+            padding:0;
+        }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            height:100%;
+            width:100%;
+            margin:0;
+            padding:0;
+            border-collapse: collapse;
+            background-color: gray;
+        }
+        /* demo контейнер */
+        .demo {
+            max-width: 1024px;
+            margin-left: 7px;
+            margin-bottom: 7px;
+        }
+        /* скрываем чекбоксы и блоки с содержанием */
+        .hide,
+        .hide + label ~ div {
+            display: none;
+        }
+        /* вид текста label */
+        .hide + label {
+            float:left;
+            text-align: center;
+            width: 178px;
+            background-color: #3d3c3f;
+            padding: 7px;
+            color: #FFFFFF;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        /* вид текста label при активном переключателе */
+        .hide:checked + label {
+            float: left;
+            text-align: center;
+            background-color:  #3d3c3f;
+            color: #FFFFFF;
+            border-bottom: 0;
+        }
+        /* когда чекбокс активен показываем блоки с содержанием  */
+        .hide:checked + label + div {
+            display: block;
+            float: left;
+
+        }
+
+        .hide + label:before {
+            background-color:  #3d3c3f;
+            color: #fff;
+            display: block;
+            float: left;
+            font-size: 14px;
+            font-weight: bold;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+        }
+        .loadFile{
+            margin-bottom: 9px;
+            margin-left: 7px;
+        }
+        #drawDiv{
+            width: 100%;
+            height: 100%;
+            padding:0;
+            margin-top: 0;
+            z-index:1;
+            position:absolute;
+        }
+
+        .description{
+            color:white;
+            margin-bottom:3px;
+            margin-top:3px;
+        }
+
+    </style>
+</head>
+<body onload = "buildScene()">
+
+
+<div style="vertical-align:top; height:0px; width:200px; background-color: gray; z-index:2; position:relative;">
+    <input class = "loadFile" type = "file" id = "newFile" onchange = "readFile(files[0])" />
+    <div class="demo">
+        <input class="hide" id="hd-1" type="checkbox">
+        <label for="hd-1">Общие настройки</label>
+
+        <div>
+            <p class = 'description'> Модель отображения:</p>
+            <button class = "selectButton" id = "stickButton" onclick = "changeModeAll('sticks')">Стержневая</button>
+            <button class = "selectButton" id = "ballsButton" onclick = "changeModeAll('balls')">Шаростержневая</button>
+            <button class = "selectButton" id = "sphereButton" onclick = "changeModeAll('spheres')">Сферы Ван-дер-ваальса</button>
+
+            <button class = "selectButton deleteButton" id = "delete" onclick = "deleteAll()">Удалить всё</button>
+        </div>
+    </div>
+
+    <div class = "demo" id = "moleculesSettings"></div>
+    <div id = "stats"></div>
+</div>
+
+<div id='drawDiv' ></div>
+
+
+<script >
+    let molecules = {}, mode = 'balls', moleculeCount = 0;
+
+    function drawMolecules() {
+        drawScene(molecules);
+        animate();
+    }
+
+    function createModeButton(className, modeText, mode, key, func) {
+        const modeButton = document.createElement('button');
+        modeButton.className = className;
+        modeButton.innerHTML = modeText;
+        modeButton.onclick = () => {
+            func(key, mode)
+        };
+
+        return modeButton;
+    }
+
+    function addMoleculeSettings(key){
+        const molecule = molecules[key];
+        const containerDiv = document.getElementById("moleculesSettings");
+        let checked = false;
+
+        if (containerDiv.firstChild){
+            const checkbox = containerDiv.firstChild;
+            checked = checkbox.checked;
+        }
+        if (checked) {
+            var innerHtml = `<input class=hide id=${key} type=checkbox checked>`;
+        } else {
+            innerHtml = `<input class=hide id=${key} type=checkbox>`;
+        }
+
+        innerHtml += `<label for=${key}>`;
+        if (molecule.getName() == '*****'){
+            innerHtml += `Молекула: #${key}<br>`;
+        } else {
+            innerHtml += `Молекула: ${molecule.getName()} ${key}<br>`;
+        }
+        innerHtml += `Тип: ${molecule.getType()}</label>`;
+
+        const buttonDiv = document.createElement('div');
+        const description = document.createElement('p');
+        description.className = 'description';
+        description.innerHTML = 'Модель отображения:';
+        buttonDiv.appendChild(description);
+        buttonDiv.appendChild(createModeButton('selectButton', 'Стержневая', 'sticks', key, changeMode));
+        buttonDiv.appendChild(createModeButton('selectButton', 'Шаростержневая', 'balls', key, changeMode));
+        buttonDiv.appendChild(createModeButton('selectButton', 'Сферы Ван-дер-ваальса', 'spheres', key, changeMode));
+
+        buttonDiv.appendChild(createModeButton('selectButton deleteButton', 'Удалить молекулу', 'sticks', key, deleteMolecule));
+
+
+        containerDiv.innerHTML = innerHtml;
+        containerDiv.appendChild(buttonDiv);
+    }
+
+</script>
+
+
+<script src = "src/parseMol.js"></script>
+<script src = "src/structures.js"></script>
+<script src = "src/renderer.js"></script>
+<script src= "src/CPK.js"></script>
+<script src= "src/buttonFunctions.js"></script>
+<script src= "src/mouseEvents.js"></script>
+
+</body>
+</html>
