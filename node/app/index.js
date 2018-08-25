@@ -2,10 +2,10 @@ var express = require("express");
 var app     = express();
 var path    = require("path");
 
-app.use(express.static("C:\\Users\\Татьяна\\WebstormProjects\\node\\app\\untitled"));
+app.use(express.static("/home/tatiana/WebstormProjects/kurs/node/app/untitled/index.html"));
 
 app.get('/',function(req,res){
-    res.sendFile(path.join(__dirname+'\\untitled\\index.html'));
+    res.sendFile(path.join(__dirname+'/untitled/index.html'));
     //__dirname : It will resolve to your project folder.
 });
 
